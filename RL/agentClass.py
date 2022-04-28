@@ -29,6 +29,16 @@ class TQAgent:
         # 'len(gameboard.tiles)' number of different tiles
         # 'self.episode_count' the total number of episodes in the training
 
+        # First thoughts and ideas for these: 
+        # States need to represent all possible combinations of plus and minus one (or zero?) in the grid, this could be encoded as a binary number
+        # Binary number of state together with number of the current tile gives us a q table (like states as rows and rotations as cols)
+        # Every entry in Q table represents the actions that can be taken, column and orientation to drop (How to format? Every entry as a vector [x, r]?) 
+
+        #self.state = binary something?
+        self.action = None 
+        self.Qtable = np.ones(shape=(2**(gameboard.N_row*gameboard.N_col), 4))  # TODO This probably gets way too big, 65536 x 4 seems overwhelming but most will be empty? 
+
+
     def fn_load_strategy(self,strategy_file):
         pass
         # TO BE COMPLETED BY STUDENT
@@ -50,13 +60,13 @@ class TQAgent:
         # 'self.gameboard.cur_tile_type' identifier of the current tile that should be placed on the game board (integer between 0 and len(self.gameboard.tiles))
 
     def fn_select_action(self):
-        pass
+        
         # TO BE COMPLETED BY STUDENT
         # This function should be written by you
         # Instructions:
         # Choose and execute an action, based on the Q-table or random if epsilon greedy
         # This function should not return a value, store the action as an attribute of self and exectute the action by moving the tile to the desired position and orientation
-
+        
         # Useful variables: 
         # 'self.epsilon' parameter epsilon in epsilon-greedy policy
 
@@ -66,6 +76,13 @@ class TQAgent:
         # The input argument 'tile_orientation' contains the number of 90 degree rotations of the tile (0 < tile_orientation < # of non-degenerate rotations)
         # The function returns 1 if the action is not valid and 0 otherwise
         # You can use this function to map out which actions are valid or not
+
+        if np.random.rand() > self.epsilon: # Take the current best known action
+            pass    # TODO make it choose best from Q-table, argmax?
+        else:
+            self.action = np.random.randint(0,self.gameboard.N_col), np.random.randint(0, len(self.tiles[self.cur_tile_type]))  # Guess this is what will be used to update Q-table, might need to come back to the format of this ()
+            self.gameboard.fn_move(self.action)
+
     
     def fn_reinforce(self,old_state,reward):
         pass
