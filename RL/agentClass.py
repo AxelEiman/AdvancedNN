@@ -34,9 +34,12 @@ class TQAgent:
         # Binary number of state together with number of the current tile gives us a q table (like states as rows and rotations as cols)
         # Every entry in Q table represents the actions that can be taken, column and orientation to drop (How to format? Every entry as a vector [x, r]?) 
 
-        #self.state = binary something?
+        self.state = None # binary something?
         self.action = None 
-        self.Qtable = np.ones(shape=(2**(gameboard.N_row*gameboard.N_col), 4))  # TODO This probably gets way too big, 65536 x 4 seems overwhelming but most will be empty? 
+        self.Qtable = np.empty(shape=(2**(gameboard.N_row*gameboard.N_col), len(self.tiles), ))  # Maybe make states include cur_tile, so it literally is a table and not a 3+ dimensional thing?
+
+        # Qtable is the tricky one:
+        # self.Qtable[state, tile_type] => array representing actions' Q scores? maybe bigger 2d table?
 
 
     def fn_load_strategy(self,strategy_file):
@@ -45,7 +48,7 @@ class TQAgent:
         # Here you can load the Q-table (to Q-table of self) from the input parameter strategy_file (used to test how the agent plays)
 
     def fn_read_state(self):
-        pass
+        
         # TO BE COMPLETED BY STUDENT
         # This function should be written by you
         # Instructions:
@@ -58,6 +61,10 @@ class TQAgent:
         # 'self.gameboard.N_col' number of columns in gameboard
         # 'self.gameboard.board[index_row,index_col]' table indicating if row 'index_row' and column 'index_col' is occupied (+1) or free (-1)
         # 'self.gameboard.cur_tile_type' identifier of the current tile that should be placed on the game board (integer between 0 and len(self.gameboard.tiles))
+
+        c_board = np.where(self.gameboard.board<0, 0, self.gameboard.board).flatten()
+        self.state = c_board.dot(2**np.arange(len(c_board)))
+        
 
     def fn_select_action(self):
         
