@@ -2,6 +2,8 @@ import numpy as np
 import random
 import math
 import h5py
+import copy
+import matplotlib.pyplot as plt
 
 # This file provides the skeleton structure for the classes TQAgent and TDQNAgent to be completed by you, the student.
 # Locations starting with # TO BE COMPLETED BY STUDENT indicates missing code that should be written by you.
@@ -34,16 +36,24 @@ class TQAgent:
         # Binary number of state together with number of the current tile gives us a q table (like states as rows and rotations as cols)
         # Every entry in Q table represents the actions that can be taken, column and orientation to drop (How to format? Every entry as a vector [x, r]?) 
 
-        self.state = None # binary something?
-        self.action = None 
-        self.Qtable = np.empty(shape=(2**(gameboard.N_row*gameboard.N_col), len(self.tiles), ))  # Maybe make states include cur_tile, so it literally is a table and not a 3+ dimensional thing?
+        self.state = None # Becomes an int, representing gameboard and cur_tile in binary
+        self.actions = [
+            (0,0), (0,1), (0,2), (0,3),
+            (1,0), (1,1), (1,2), (1,3),
+            (2,0), (2,1), (2,2), (2,3),
+            (3,0)
+        ]
+        self.Qtable = np.zeros(shape=(4*2**(gameboard.N_row*gameboard.N_col + 2), 13))
+        self.reward_tots = np.zeros(self.episode_count)
+        
+        #np.empty(shape=(2**(gameboard.N_row*gameboard.N_col), len(self.tiles)))  # Maybe make states include cur_tile, so it literally is a table and not a 3+ dimensional thing?
 
         # Qtable is the tricky one:
         # self.Qtable[state, tile_type] => array representing actions' Q scores? maybe bigger 2d table?
 
 
     def fn_load_strategy(self,strategy_file):
-        pass
+        self.Qtable = np.load(strategy_file)
         # TO BE COMPLETED BY STUDENT
         # Here you can load the Q-table (to Q-table of self) from the input parameter strategy_file (used to test how the agent plays)
 
@@ -63,7 +73,9 @@ class TQAgent:
         # 'self.gameboard.cur_tile_type' identifier of the current tile that should be placed on the game board (integer between 0 and len(self.gameboard.tiles))
 
         c_board = np.where(self.gameboard.board<0, 0, self.gameboard.board).flatten()
-        self.state = c_board.dot(2**np.arange(len(c_board)))
+        c_tile = np.array(list(np.binary_repr(self.gameboard.cur_tile_type).zfill(2))).astype(np.int8)
+        c_state_bin = np.append(c_board, c_tile)
+        self.state = int(c_state_bin.dot(2**np.arange(len(c_state_bin))))
         
 
     def fn_select_action(self):
@@ -85,14 +97,15 @@ class TQAgent:
         # You can use this function to map out which actions are valid or not
 
         if np.random.rand() > self.epsilon: # Take the current best known action
-            pass    # TODO make it choose best from Q-table, argmax?
+            self.action_n = np.argmax(self.Qtable[self.state, :]) # Returns column of best action
+            self.action = self.actions[self.action_n]
+            self.gameboard.fn_move(self.action[0], self.action[1])
         else:
-            self.action = np.random.randint(0,self.gameboard.N_col), np.random.randint(0, len(self.tiles[self.cur_tile_type]))  # Guess this is what will be used to update Q-table, might need to come back to the format of this ()
-            self.gameboard.fn_move(self.action)
+            self.action = np.random.randint(0,self.gameboard.N_col), np.random.randint(0, len(self.gameboard.tiles[self.gameboard.cur_tile_type]))  # Guess this is what will be used to update Q-table, might need to come back to the format of this ()
+            self.gameboard.fn_move(self.action[0], self.action[1])
 
     
     def fn_reinforce(self,old_state,reward):
-        pass
         # TO BE COMPLETED BY STUDENT
         # This function should be written by you
         # Instructions:
@@ -101,18 +114,30 @@ class TQAgent:
 
         # Useful variables: 
         # 'self.alpha' learning rate
+        maxVal = np.max(self.Qtable[self.state, :])
+        oldVal = copy.deepcopy(self.Qtable[old_state, self.action_n])
+        self.Qtable[old_state, self.action_n] += self.alpha * (reward + maxVal - oldVal)
 
     def fn_turn(self):
         if self.gameboard.gameover:
             self.episode+=1
             if self.episode%100==0:
-                print('episode '+str(self.episode)+'/'+str(self.episode_count)+' (reward: ',str(np.sum(self.reward_tots[range(self.episode-100,self.episode)])),')')
+                print('episode '+str(self.episode)+'/'+str(self.episode_count)+' (reward: ',str(np.sum(self.reward_tots[self.episode-100:self.episode])),')')
             if self.episode%1000==0:
                 saveEpisodes=[1000,2000,5000,10000,20000,50000,100000,200000,500000,1000000];
-                if self.episode in saveEpisodes:
-                    pass
+                if self.episode == self.episode_count:
+                    window_width = 100
+                    cumsum_vec = np.cumsum(np.insert(self.reward_tots, 0, 0)) 
+                    ma_vec = (cumsum_vec[window_width:] - cumsum_vec[:-window_width]) / window_width
+                    plt.plot(np.arange(0,self.episode_count-window_width+1), ma_vec)
+                    plt.title(f'Moving average reward during training\nMax reached: {np.max(self.reward_tots)}')
+                    plt.xlabel('Episode')
+                    plt.ylabel('Reward')
+                    plt.show()
                     # TO BE COMPLETED BY STUDENT
                     # Here you can save the rewards and the Q-table to data files for plotting of the rewards and the Q-table can be used to test how the agent plays
+                    np.save(f'RL\saves\{self.episode_count}.npy', self.Qtable)
+
             if self.episode>=self.episode_count:
                 raise SystemExit(0)
             else:
@@ -122,11 +147,13 @@ class TQAgent:
             self.fn_select_action()
             # TO BE COMPLETED BY STUDENT
             # Here you should write line(s) to copy the old state into the variable 'old_state' which is later passed to fn_reinforce()
+            old_state = np.copy(self.state)
 
             # Drop the tile on the game board
             reward=self.gameboard.fn_drop()
             # TO BE COMPLETED BY STUDENT
             # Here you should write line(s) to add the current reward to the total reward for the current episode, so you can save it to disk later
+            self.reward_tots[self.episode] += reward
 
             # Read the new state
             self.fn_read_state()

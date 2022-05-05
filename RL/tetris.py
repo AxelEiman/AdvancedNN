@@ -3,6 +3,7 @@ import pygame
 import h5py
 import gameboardClass
 import agentClass
+import matplotlib.pyplot as plt
 
 PARAM_TASK1a=1
 PARAM_TASK1b=2
@@ -13,12 +14,12 @@ PARAM_TASK2b=6
 
 # Choose to control the game yourself ('human_player=1') to test the setups in the different tasks
 human_player=0
-human_player=1
+#human_player=1
 
 # Choose parameter sets for different tasks
-param_set=PARAM_TASK1a
+#param_set=PARAM_TASK1a
 #param_set=PARAM_TASK1b
-#param_set=PARAM_TASK1c
+param_set=PARAM_TASK1c
 #param_set=PARAM_TASK1d
 #param_set=PARAM_TASK2a
 #param_set=PARAM_TASK2b
@@ -240,6 +241,8 @@ else:
     # The player is AI
     while True:
         gameboard.agent.fn_turn()
+    
+
 
 
 

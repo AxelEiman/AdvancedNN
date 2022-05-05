@@ -3,7 +3,7 @@ import random
 
 class TGameBoard:
 
-    def __init__(self,N_row,N_col,tile_size,max_tile_count,agent,stochastic_prob):
+    def __init__(self, N_row, N_col, tile_size, max_tile_count, agent, stochastic_prob):
         self.N_row=N_row
         self.N_col=N_col
         self.tile_size=tile_size
@@ -12,7 +12,7 @@ class TGameBoard:
         self.agent=agent;
         # Create table for game board, entries 1 means occupied, entries -1 means free
         # Use type float32 to simplify conversion to tensors in torch
-        self.board=np.empty((N_row,N_col),dtype=np.float32)
+        self.board = np.empty((N_row,N_col), dtype=np.float32)
         self.cur_tile_type=-1
         self.tile_x=-1
         self.tile_y=-1
@@ -30,7 +30,10 @@ class TGameBoard:
 
             #   x x
             #   x x
-            # Tile structure of tiles[i,j]: The first dimension denotes x value, the length denotes the number of columns taken by the tile. The second dimension consist of pairs giving the y range: first element in the pair is the first row of the tile and the second element second is the last row plus 1 of the tile for the current column
+            # Tile structure of tiles[i,j]: The first dimension denotes x value, the length denotes the number of 
+            # columns taken by the tile. The second dimension consist of pairs giving the y range: first element 
+            # in the pair is the first row of the tile and the second element second is the last row plus 1 of the
+            # tile for the current column
             self.tiles = [
                 [[[0,2]], [[0,1],[0,1]]],
                 [[[0,1],[1,2]], [[1,2],[0,1]]],
@@ -49,6 +52,7 @@ class TGameBoard:
             #   0 x x    x 0
 
             #            x 0
+            
             #   0 x x    x x
             #   x x 0    0 x
 
